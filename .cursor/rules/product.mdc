@@ -1,0 +1,37 @@
+---
+description: Product context and vocabulary for tweet-delete
+alwaysApply: true
+---
+
+# tweet-delete product context
+
+tweet-delete is a secure, theatrical app for deleting old public X posts. The utility is cleanup. The product is the ritual.
+
+## Core product fantasy
+
+The user enters a haunted low-fi DOS archive, walks through old public memory, collects posts into a burn bag, types a deletion poem, and closes the archive.
+
+## Use these terms
+
+- Command center, not dashboard
+- Signal scan, not search
+- Timeline descent, not reverse chronological browser
+- Targeting rules, not filters
+- Burn bag, not delete queue
+- Clemency list, not exclusions
+- Rehearsal, not dry run
+- Deletion verse, not confirmation text
+- Purge sequence, not delete job
+- Black box report, not audit log
+- Sever link, not disconnect account
+
+## UX rules
+
+- Queueing is safe.
+- Sealing is serious.
+- Deleting is irreversible.
+- Always show account handle and post count before destructive action.
+- Always distinguish simulation from live deletion.
+- Always include pause and abort remaining during purge.
+- Never use fake urgency.
+- Never make destructive actions one-click.

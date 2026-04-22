@@ -1,0 +1,382 @@
+:root {
+  --bg: #0000a8;
+  --bg-input: #000080;
+  --text: #ffffff;
+  --accent: #ffff55;
+  --muted: #aaaaaa;
+  --border: #ffffff;
+  --select-bg: #00a8a8;
+  --select-fg: #000000;
+  --error-bg: #a80000;
+  --error-fg: #ffff55;
+  --ok-fg: #55ff55;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Consolas", "Menlo", "Lucida Console", "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover,
+a:focus-visible {
+  background: var(--select-bg);
+  color: var(--select-fg);
+  outline: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--select-bg);
+  color: var(--select-fg);
+}
+
+.dos-main {
+  min-height: 100vh;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.dos-panel {
+  width: 100%;
+  max-width: 1100px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.dos-landing {
+  max-width: 640px;
+  margin-top: 4rem;
+}
+
+.dos-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--accent);
+}
+
+.dos-panel-head-bottom {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.dos-brand {
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+
+.dos-dim {
+  color: var(--muted);
+}
+
+.dos-panel-body {
+  padding: 0.9rem 1rem;
+}
+
+.dos-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.dos-stack > p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.dos-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.dos-row-between {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dos-button {
+  display: inline-block;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.15rem 0.6rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  font: inherit;
+  line-height: 1.4;
+}
+
+.dos-button:hover:not(:disabled),
+.dos-button:focus-visible:not(:disabled) {
+  background: var(--select-bg);
+  color: var(--select-fg);
+  outline: none;
+}
+
+.dos-button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.dos-button-danger {
+  color: var(--accent);
+}
+
+.dos-button-danger:hover:not(:disabled),
+.dos-button-danger:focus-visible:not(:disabled) {
+  background: var(--error-bg);
+  color: var(--accent);
+}
+
+.dos-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.dos-link:hover,
+.dos-link:focus-visible {
+  background: var(--select-bg);
+  color: var(--select-fg);
+  outline: none;
+}
+
+.dos-fieldset {
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.75rem 0.75rem;
+  position: relative;
+  margin-top: 0.5rem;
+}
+
+.dos-fieldset-label {
+  display: inline-block;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  transform: translateY(-0.95rem);
+  background: var(--bg);
+  padding: 0 0.5rem;
+  margin-bottom: -0.5rem;
+}
+
+.dos-filter-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 0.6rem 1rem;
+  align-items: end;
+  padding-top: 0.25rem;
+}
+
+.dos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.dos-field > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+
+.dos-field input,
+.dos-field textarea {
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  padding: 0.25rem 0.5rem;
+  outline: none;
+  width: 100%;
+  font: inherit;
+}
+
+.dos-field textarea {
+  resize: vertical;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.dos-field input::placeholder,
+.dos-field textarea::placeholder {
+  color: var(--muted);
+}
+
+.dos-field input:focus,
+.dos-field textarea:focus {
+  background: var(--select-bg);
+  color: var(--select-fg);
+}
+
+.dos-field input:focus::placeholder,
+.dos-field textarea:focus::placeholder {
+  color: var(--select-fg);
+}
+
+.dos-verse-input {
+  letter-spacing: 0.02em;
+}
+
+.dos-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font: inherit;
+}
+
+.dos-table th,
+.dos-table td {
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.dos-table thead th {
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: normal;
+}
+
+.dos-table tbody tr.dos-row-clickable {
+  cursor: pointer;
+}
+
+.dos-table tbody tr.dos-row-clickable:hover,
+.dos-table tbody tr.dos-row-clickable:focus-within {
+  background: var(--select-bg);
+  color: var(--select-fg);
+}
+
+.dos-table tbody tr.dos-row-clickable:hover a,
+.dos-table tbody tr.dos-row-clickable:hover .dos-dim {
+  color: var(--select-fg);
+}
+
+.dos-row-total td {
+  color: var(--accent);
+  border-top: 1px solid var(--border);
+}
+
+.col-year { width: 6ch; }
+.col-count { width: 10ch; text-align: right; }
+.col-bar { font-family: inherit; }
+.col-action { width: 10ch; text-align: right; color: var(--accent); }
+.col-date { width: 17ch; white-space: nowrap; }
+.col-type { width: 9ch; }
+.col-text { word-break: break-word; white-space: pre-wrap; }
+.col-likes { width: 10ch; text-align: right; }
+.col-link { width: 10ch; text-align: right; }
+.col-select { width: 3ch; text-align: center; }
+.col-select input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.dos-table tbody tr.dos-row-selected {
+  background: var(--select-bg);
+  color: var(--select-fg);
+}
+.dos-table tbody tr.dos-row-selected a,
+.dos-table tbody tr.dos-row-selected .dos-dim {
+  color: var(--select-fg);
+}
+
+.dos-bar {
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.dos-error {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  background: var(--error-bg);
+  color: var(--error-fg);
+  border: 1px solid var(--error-fg);
+}
+
+.dos-ok {
+  margin: 0;
+  color: var(--ok-fg);
+}
+
+.dos-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.dos-modal {
+  width: min(640px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  background: var(--bg);
+  border: 2px solid var(--border);
+}
+
+.dos-literal {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  font-family: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 720px) {
+  .dos-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .dos-panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .col-date { width: auto; }
+  .col-type { width: auto; }
+  .col-likes { width: auto; }
+  .col-link { width: auto; }
+}

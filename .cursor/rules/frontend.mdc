@@ -1,0 +1,37 @@
+---
+description: Frontend implementation rules for the terminal UI
+alwaysApply: true
+---
+
+# Frontend rules
+
+## Stack
+
+- Next.js app router
+- TypeScript
+- React components
+- Plain CSS unless a styling system is intentionally added later
+
+## UI style
+
+- Low-fi DOS terminal
+- Monospace text
+- High contrast
+- Chunky panels
+- Clear destructive states
+- Accessible buttons and labels
+
+## Component principles
+
+- Keep components small.
+- Put shared types in `src/lib/types.ts`.
+- Put reusable copy builders in `src/lib`.
+- Avoid mixing API calls into presentation components.
+- Make destructive state transitions explicit.
+
+## Accessibility
+
+- All interactive controls need labels or visible text.
+- Do not rely only on color for destructive state.
+- Support keyboard navigation.
+- Do not use animations that block comprehension.

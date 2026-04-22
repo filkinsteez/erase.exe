@@ -1,0 +1,41 @@
+---
+description: Security rules for destructive account actions
+alwaysApply: true
+---
+
+# Security rules
+
+This app performs destructive actions. Treat security as a product requirement.
+
+## Non-negotiables
+
+- Never ask for the user's X password.
+- Use OAuth 2.0 Authorization Code with PKCE.
+- Keep tokens server-side only.
+- Encrypt tokens at rest.
+- Never expose tokens to browser JavaScript.
+- Never delete directly from client code.
+- Never delete without a dry run.
+- Never delete without server-side queue hash verification.
+- Never delete without server-side typed deletion verse verification.
+- Never parse or display DMs from an archive upload.
+
+## Destructive endpoint checklist
+
+Before creating a live deletion job, verify:
+
+- Authenticated app user
+- Connected account ownership
+- Token belongs to displayed X account
+- Queue generated server-side
+- Dry run exists and is current
+- Queue hash matches
+- Sample review is complete when required
+- Typed verse matches expected verse
+- Final literal line matches exact destructive action
+- CSRF protection passes
+- Rate limits are applied
+
+## Logging rules
+
+Log job status and post IDs attempted. Do not log access tokens, refresh tokens, raw archive files, or full post text by default.

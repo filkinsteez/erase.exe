@@ -1,0 +1,35 @@
+---
+description: API and backend implementation rules
+alwaysApply: true
+---
+
+# API implementation rules
+
+## Pattern
+
+- Validate all request bodies with a schema.
+- Keep provider API calls in `src/lib/xApi.ts` or a dedicated service layer.
+- Keep token encryption in `src/lib/tokenCrypto.ts`.
+- Use server-side jobs for deletion.
+- Do not block HTTP requests on large deletion batches.
+
+## X API deletion
+
+Real deletion must call the official endpoint server-side for each owned post ID. The client can request a job, but the server decides what IDs are valid and deletable.
+
+## Error handling
+
+- Classify errors as validation, auth, rate limit, provider, or unknown.
+- Stop jobs on repeated auth errors.
+- Back off on provider or rate limit errors.
+- Store failure reason per post.
+
+## Testing priorities
+
+- OAuth state validation
+- PKCE generation
+- Token encryption round trip
+- Archive parser allowlist
+- Queue hash stability
+- Verse validation
+- Delete job creation guardrails
