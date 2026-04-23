@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/apiFetch";
 import type { DataMode } from "@/lib/config";
 
@@ -100,6 +100,10 @@ export function Archive({
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTyped, setConfirmTyped] = useState("");
+
+  const [yearsCursor, setYearsCursor] = useState(0);
+  const [postsRowCursor, setPostsRowCursor] = useState(0);
+  const [viewingPost, setViewingPost] = useState<SummarizedPost | null>(null);
 
   const loadRooms = useCallback(
     async (filters: ScanFilters) => {
@@ -498,6 +502,114 @@ export function Archive({
   };
 
   useEffect(() => {
+    setYearsCursor((idx) => {
+      if (!rooms || rooms.length === 0) return 0;
+      return Math.min(idx, rooms.length - 1);
+    });
+  }, [rooms]);
+
+  useEffect(() => {
+    setPostsRowCursor((idx) => {
+      if (posts.length === 0) return 0;
+      return Math.min(idx, posts.length - 1);
+    });
+  }, [posts]);
+
+  const cleanHandleRef = useRef(handle.replace(/^@/, ""));
+  useEffect(() => {
+    cleanHandleRef.current = handle.replace(/^@/, "");
+  }, [handle]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (confirmOpen) return;
+      if (viewingPost) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      if (target?.isContentEditable) return;
+
+      if (selectedYear === null) {
+        const list = rooms ?? [];
+        if (list.length === 0) return;
+        if (event.key === "ArrowDown" || event.key === "j") {
+          event.preventDefault();
+          setYearsCursor((i) => Math.min(list.length - 1, i + 1));
+        } else if (event.key === "ArrowUp" || event.key === "k") {
+          event.preventDefault();
+          setYearsCursor((i) => Math.max(0, i - 1));
+        } else if (event.key === "Home") {
+          event.preventDefault();
+          setYearsCursor(0);
+        } else if (event.key === "End") {
+          event.preventDefault();
+          setYearsCursor(list.length - 1);
+        } else if (event.key === "Enter" || event.key === "ArrowRight") {
+          event.preventDefault();
+          const room = list[Math.min(yearsCursor, list.length - 1)];
+          if (room) void openYear(room.year);
+        }
+        return;
+      }
+
+      if (event.key === "Escape" || event.key === "Backspace") {
+        event.preventDefault();
+        closeYear();
+        return;
+      }
+      if (event.key === "ArrowLeft" || event.key === "h") {
+        if (postsPrevCursors.length > 0 && !loadingPosts) {
+          event.preventDefault();
+          prevPostsPage();
+        }
+        return;
+      }
+      if (event.key === "ArrowRight" || event.key === "l") {
+        if (postsCursor !== null && !loadingPosts) {
+          event.preventDefault();
+          nextPostsPage();
+        }
+        return;
+      }
+      if (posts.length === 0) return;
+      if (event.key === "ArrowDown" || event.key === "j") {
+        event.preventDefault();
+        setPostsRowCursor((i) => Math.min(posts.length - 1, i + 1));
+      } else if (event.key === "ArrowUp" || event.key === "k") {
+        event.preventDefault();
+        setPostsRowCursor((i) => Math.max(0, i - 1));
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        setPostsRowCursor(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        setPostsRowCursor(posts.length - 1);
+      } else if (event.key === " " || event.key === "x") {
+        event.preventDefault();
+        const p = posts[Math.min(postsRowCursor, posts.length - 1)];
+        if (p) togglePostSelected(p.providerPostId);
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        const p = posts[Math.min(postsRowCursor, posts.length - 1)];
+        if (p) setViewingPost(p);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [
+    confirmOpen,
+    viewingPost,
+    selectedYear,
+    rooms,
+    yearsCursor,
+    posts,
+    postsRowCursor,
+    postsCursor,
+    postsPrevCursors,
+    loadingPosts
+  ]);
+
+  useEffect(() => {
     if (!byoKeyEnabled) return;
     let alive = true;
     fetch("/api/account/byo-key", { method: "GET" })
@@ -726,6 +838,8 @@ export function Archive({
               total={totalPosts}
               maxRoom={maxRoom}
               onOpen={openYear}
+              cursor={yearsCursor}
+              onCursorChange={setYearsCursor}
             />
           ) : (
             <PostsTable
@@ -748,10 +862,20 @@ export function Archive({
               deleting={deleting}
               deleteMessage={deleteMessage}
               creditsDepleted={creditsDepleted}
+              cursor={postsRowCursor}
+              onCursorChange={setPostsRowCursor}
+              onView={setViewingPost}
             />
           )}
         </div>
       </div>
+      {viewingPost ? (
+        <PostViewerModal
+          handle={cleanHandle}
+          post={viewingPost}
+          onClose={() => setViewingPost(null)}
+        />
+      ) : null}
       {confirmOpen ? (
         <ConfirmDeleteModal
           count={pendingDeleteCount}
@@ -775,7 +899,9 @@ function YearsTable({
   filtersActive,
   total,
   maxRoom,
-  onOpen
+  onOpen,
+  cursor,
+  onCursorChange
 }: {
   rooms: Room[] | null;
   loading: boolean;
@@ -784,11 +910,27 @@ function YearsTable({
   total: number;
   maxRoom: number;
   onOpen: (year: number) => void;
+  cursor: number;
+  onCursorChange: (index: number) => void;
 }) {
+  const rowRefs = useRef<Array<HTMLTableRowElement | null>>([]);
+  const safeCursor = rooms && rooms.length > 0 ? Math.min(cursor, rooms.length - 1) : -1;
+
+  useEffect(() => {
+    if (safeCursor < 0) return;
+    const row = rowRefs.current[safeCursor];
+    row?.scrollIntoView({ block: "nearest" });
+  }, [safeCursor]);
+
   return (
     <section className="dos-fieldset">
-      <div className="dos-fieldset-label">
-        YEARS {filtersActive ? "(FILTERED)" : ""}
+      <div className="dos-fieldset-label dos-row-between">
+        <span>YEARS {filtersActive ? "(FILTERED)" : ""}</span>
+        {rooms && rooms.length > 0 ? (
+          <span className="dos-dim" style={{ letterSpacing: "0.04em" }}>
+            [ UP/DOWN ] SELECT &middot; [ ENTER ] OPEN
+          </span>
+        ) : null}
       </div>
 
       {error ? <p className="dos-error">{error}</p> : null}
@@ -812,20 +954,29 @@ function YearsTable({
             </tr>
           </thead>
           <tbody>
-            {rooms.map((room) => (
-              <tr
-                key={room.year}
-                className="dos-row-clickable"
-                onClick={() => onOpen(room.year)}
-              >
-                <td className="col-year">{room.year}</td>
-                <td className="col-count">{room.postCount.toLocaleString()}</td>
-                <td className="col-bar">
-                  <TextBar value={room.postCount} max={maxRoom} />
-                </td>
-                <td className="col-action">[ OPEN ]</td>
-              </tr>
-            ))}
+            {rooms.map((room, index) => {
+              const isCursor = index === safeCursor;
+              return (
+                <tr
+                  key={room.year}
+                  ref={(el) => {
+                    rowRefs.current[index] = el;
+                  }}
+                  className={
+                    isCursor ? "dos-row-clickable dos-row-cursor" : "dos-row-clickable"
+                  }
+                  onClick={() => onOpen(room.year)}
+                  onMouseEnter={() => onCursorChange(index)}
+                >
+                  <td className="col-year">{room.year}</td>
+                  <td className="col-count">{room.postCount.toLocaleString()}</td>
+                  <td className="col-bar">
+                    <TextBar value={room.postCount} max={maxRoom} />
+                  </td>
+                  <td className="col-action">[ OPEN ]</td>
+                </tr>
+              );
+            })}
             <tr className="dos-row-total">
               <td className="col-year">TOTAL</td>
               <td className="col-count">{total.toLocaleString()}</td>
@@ -855,9 +1006,12 @@ function PostsTable({
   onTogglePageSelected,
   onClearSelection,
   onDeleteSelected,
+  onView,
   deleting,
   deleteMessage,
-  creditsDepleted
+  creditsDepleted,
+  cursor,
+  onCursorChange
 }: {
   handle: string;
   year: number;
@@ -875,15 +1029,26 @@ function PostsTable({
   onTogglePageSelected: () => void;
   onClearSelection: () => void;
   onDeleteSelected: () => void;
+  onView: (post: SummarizedPost) => void;
   deleting: boolean;
   deleteMessage: string | null;
   creditsDepleted: boolean;
+  cursor: number;
+  onCursorChange: (index: number) => void;
 }) {
   const cleanHandle = handle.replace(/^@/, "");
   const pageIds = posts.map((p) => p.providerPostId);
   const pageAllSelected =
     pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
   const selectedCount = selectedIds.size;
+  const safeCursor = posts.length > 0 ? Math.min(cursor, posts.length - 1) : -1;
+  const rowRefs = useRef<Array<HTMLTableRowElement | null>>([]);
+
+  useEffect(() => {
+    if (safeCursor < 0) return;
+    const row = rowRefs.current[safeCursor];
+    row?.scrollIntoView({ block: "nearest" });
+  }, [safeCursor]);
   return (
     <section className="dos-fieldset">
       <div className="dos-fieldset-label dos-row-between">
@@ -894,6 +1059,11 @@ function PostsTable({
           [ Back to years ]
         </button>
       </div>
+      {posts.length > 0 ? (
+        <p className="dos-dim" style={{ margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>
+          [ UP/DOWN ] ROW &middot; [ SPACE ] SELECT &middot; [ LEFT/RIGHT ] PAGE &middot; [ ENTER ] VIEW &middot; [ ESC ] BACK
+        </p>
+      ) : null}
 
       {error ? <p className="dos-error">{error}</p> : null}
       {loading ? <p className="dos-dim">LOADING...</p> : null}
@@ -968,11 +1138,24 @@ function PostsTable({
               </tr>
             </thead>
             <tbody>
-              {posts.map((post) => {
-                const url = `https://x.com/${cleanHandle}/status/${post.providerPostId}`;
+              {posts.map((post, index) => {
                 const checked = selectedIds.has(post.providerPostId);
+                const isCursor = index === safeCursor;
+                const classes = [
+                  checked ? "dos-row-selected" : "",
+                  isCursor ? "dos-row-cursor" : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ");
                 return (
-                  <tr key={post.id} className={checked ? "dos-row-selected" : undefined}>
+                  <tr
+                    key={post.id}
+                    ref={(el) => {
+                      rowRefs.current[index] = el;
+                    }}
+                    className={classes || undefined}
+                    onMouseEnter={() => onCursorChange(index)}
+                  >
                     <td className="col-select">
                       <input
                         type="checkbox"
@@ -990,9 +1173,13 @@ function PostsTable({
                     </td>
                     <td className="col-likes">{post.likes.toLocaleString()}</td>
                     <td className="col-link">
-                      <a href={url} target="_blank" rel="noreferrer" className="dos-link">
+                      <button
+                        type="button"
+                        className="dos-link dos-link-button"
+                        onClick={() => onView(post)}
+                      >
                         [ View ]
-                      </a>
+                      </button>
                     </td>
                   </tr>
                 );
@@ -1136,6 +1323,107 @@ function ConfirmDeleteModal({
               {submitting ? "[ Deleting... ]" : "[ Confirm delete ]"}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PostViewerModal({
+  handle,
+  post,
+  onClose
+}: {
+  handle: string;
+  post: SummarizedPost;
+  onClose: () => void;
+}) {
+  const url = `https://x.com/${handle}/status/${post.providerPostId}`;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      } else if (event.key === "Enter") {
+        const target = event.target as HTMLElement | null;
+        const tag = target?.tagName?.toLowerCase();
+        if (tag === "input" || tag === "textarea") return;
+        event.preventDefault();
+        window.open(url, "_blank", "noreferrer");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [url, onClose]);
+
+  return (
+    <div
+      className="dos-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dos-post-title"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="dos-modal dos-panel">
+        <header className="dos-panel-head">
+          <span className="dos-brand" id="dos-post-title">
+            POST &middot; @{handle}
+          </span>
+          <span className="dos-dim">
+            {post.source === "archive" ? "ARCHIVE" : "X API"}
+          </span>
+        </header>
+        <div className="dos-panel-body dos-stack">
+          <dl className="dos-kv">
+            <div className="dos-kv-row">
+              <dt>DATE</dt>
+              <dd>{formatDate(post.postedAt)}</dd>
+            </div>
+            <div className="dos-kv-row">
+              <dt>TYPE</dt>
+              <dd>{post.type.toUpperCase()}</dd>
+            </div>
+            <div className="dos-kv-row">
+              <dt>LIKES</dt>
+              <dd>{post.likes.toLocaleString()}</dd>
+            </div>
+            <div className="dos-kv-row">
+              <dt>ID</dt>
+              <dd>{post.providerPostId}</dd>
+            </div>
+            {post.hasMedia ? (
+              <div className="dos-kv-row">
+                <dt>MEDIA</dt>
+                <dd className="dos-dim">
+                  Attached media is not rendered here. Open on X to view.
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+          <div>
+            <div className="dos-dim" style={{ marginBottom: "0.25rem" }}>
+              TEXT
+            </div>
+            <pre className="dos-literal">{post.text || "(empty)"}</pre>
+          </div>
+          <div className="dos-row-between">
+            <button type="button" className="dos-button" onClick={onClose}>
+              [ Close ]
+            </button>
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="dos-button dos-button-accent"
+            >
+              [ View on X ]
+            </a>
+          </div>
+          <p className="dos-dim" style={{ margin: 0, letterSpacing: "0.04em" }}>
+            [ ENTER ] OPEN ON X &middot; [ ESC ] CLOSE
+          </p>
         </div>
       </div>
     </div>

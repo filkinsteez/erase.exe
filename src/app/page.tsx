@@ -4,7 +4,8 @@ import { getSession } from "@/lib/session";
 import { ensureCsrfToken } from "@/lib/csrf";
 import { fetchAndStoreUserTimeline } from "@/lib/scan";
 import { Archive } from "@/components/Archive";
-import { getDataConfig, type DataMode } from "@/lib/config";
+import { LandingTerminal } from "@/components/LandingTerminal";
+import { getDataConfig } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -71,67 +72,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Pa
     );
   }
 
-  return <Landing oauthError={oauthError} severed={severed} mode={config.mode} />;
-}
-
-function Landing({
-  oauthError,
-  severed,
-  mode
-}: {
-  oauthError?: string;
-  severed: boolean;
-  mode: DataMode;
-}) {
-  return (
-    <main className="dos-main">
-      <div className="dos-panel dos-landing">
-        <header className="dos-panel-head">
-          <span className="dos-brand">TWEET-DELETE</span>
-          <span className="dos-dim">v0.1 / PUBLIC POSTS BROWSER</span>
-        </header>
-
-        <div className="dos-panel-body dos-stack">
-          <p>
-            Browse your old public X posts by year. Filter by keyword or date range.
-            Read what you wrote a decade ago before deciding what to do about it.
-          </p>
-          {mode === "server" ? (
-            <p className="dos-dim">
-              Requires read access to your X account. Tokens are encrypted at rest.
-              You can sever the link at any time.
-            </p>
-          ) : null}
-          {mode === "user" ? (
-            <p className="dos-dim">
-              Step 1: connect X for identity only, we won&apos;t read tweets via the API.
-              Step 2: upload your X data archive or paste your own API bearer on the next screen.
-            </p>
-          ) : null}
-          {mode === "mixed" ? (
-            <p className="dos-dim">
-              Requires read access to your X account. If the server API is out of credits
-              you can upload your X data archive or paste your own API bearer on the next screen.
-            </p>
-          ) : null}
-        </div>
-
-        <div className="dos-panel-head dos-panel-head-bottom">
-          <span className="dos-brand">CONNECT</span>
-          <span className="dos-dim">STEP 1 / 1</span>
-        </div>
-        <div className="dos-panel-body dos-stack">
-          {severed ? (
-            <p className="dos-ok">ACCESS SEVERED. Connect again to browse.</p>
-          ) : null}
-          {oauthError ? <p className="dos-error">OAUTH ERROR: {oauthError}</p> : null}
-          <a className="dos-button" href="/api/x/oauth/start">
-            [ Connect X account ]
-          </a>
-        </div>
-      </div>
-    </main>
-  );
+  return <LandingTerminal oauthError={oauthError} severed={severed} mode={config.mode} />;
 }
 
 function firstString(value: string | string[] | undefined): string | undefined {
